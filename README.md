@@ -86,16 +86,12 @@ sequenceDiagram
 
 ## 📸 System Monitoring & Runtime Outputs
 
-### 1. Terminal Output & Integration Test Results
+### 1. Spring Cloud Eureka Service Registry Status
+Integration test execution and automated saga transaction verification output:
 
-![Automated Test Execution & Saga Flow](assets/architecture_diagram.jpg)
+![Spring Cloud Eureka Service Registry Status](assets/eureka_dashboard.jpg)
 
-### 2. Spring Cloud Eureka Service Registry Status (`http://localhost:8761`)
-Dynamic discovery and load balancing dashboard showing all registered microservices marked **`UP`**:
-
-![Eureka Service Registry Output](assets/eureka_dashboard.jpg)
-
-### 3. Zipkin Distributed Tracing UI (`http://localhost:9411`)
+### 2. Zipkin Distributed Tracing UI (`http://localhost:9411`)
 Distributed trace span waterfall tracking Kafka message propagation latencies and HTTP request flows:
 
 ![Zipkin Tracing Waterfall Output](assets/zipkin_tracing.jpg)
