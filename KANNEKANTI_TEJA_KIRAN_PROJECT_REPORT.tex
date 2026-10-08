@@ -2,7 +2,7 @@
 
 % --- Packages ---
 \usepackage[utf8]{utf8}
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=0.8in]{geometry}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{hyperref}
@@ -31,8 +31,7 @@
     linkcolor=brandBlue,
     filecolor=accentPurple,      
     urlcolor=brandBlue,
-    pdftitle={Distributed E-Commerce Microservices Report - KANNEKANTI TEJA KIRAN},
-    pdfauthor={KANNEKANTI TEJA KIRAN},
+    pdftitle={Distributed E-Commerce Microservices Report},
 }
 
 % --- Listings / Code Style ---
@@ -56,7 +55,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \rhead{\textcolor{gray}{\small ZAALIMA DEVELOPMENT PVT LTD | Project Submission Report}}
-\lhead{\textcolor{gray}{\small KANNEKANTI TEJA KIRAN}}
+\lhead{}
 \rfoot{\textcolor{gray}{\small Page \thepage}}
 \lfoot{\textcolor{gray}{\small Distributed E-Commerce Microservices}}
 
@@ -69,70 +68,38 @@
 \begin{document}
 
 % ==========================================
-% TITLE PAGE / COVER BANNER
+% TOP HEADER BANNER (NO COVER PAGE)
 % ==========================================
-\begin{titlepage}
+\begin{tcolorbox}[colback=primaryDark,colframe=brandBlue,arc=3mm,boxrule=1.5pt,width=\textwidth]
+    \color{white}
     \centering
-    \vspace*{1cm}
-    
-    {\Huge \bfseries \color{primaryDark} Distributed Event-Driven E-Commerce Microservices Platform \par}
-    \vspace{0.5cm}
-    {\fontfamily{phv}\large \color{brandBlue} Highly Scalable Back-End Infrastructure \& Choreography Saga Specification \par}
-    
-    \vspace{1.5cm}
-    
-    \begin{tcolorbox}[colback=primaryDark,colframe=brandBlue,arc=4mm,boxrule=1.5pt,width=\textwidth]
-        \color{white}
-        \centering
-        \vspace{0.3cm}
-        {\Large \bfseries TECHNICAL PROJECT SUBMISSION REPORT \par}
-        \vspace{0.2cm}
-        {\small Submitted to: \textbf{ZAALIMA DEVELOPMENT PVT LTD} \par}
-        \vspace{0.3cm}
-    \end{tcolorbox}
+    \vspace{0.15cm}
+    {\Large \bfseries DISTRIBUTED EVENT-DRIVEN E-COMMERCE MICROSERVICES PLATFORM \par}
+    \vspace{0.1cm}
+    {\small Technical Project Submission Report | Submitted to: \textbf{ZAALIMA DEVELOPMENT PVT LTD} \par}
+    \vspace{0.1cm}
+\end{tcolorbox}
 
-    \vspace{2cm}
+\vspace{0.2cm}
 
-    \begin{minipage}{0.48\textwidth}
-        \begin{flushleft} \large
-            \textbf{Author / Lead Developer:}\\
-            \textcolor{brandBlue}{\textbf{KANNEKANTI TEJA KIRAN}}\\
-            \small Software Engineering Trainee\\
-            \small Email: \href{mailto:teja@example.com}{kannekanti.teja@example.com}
-        \end{flushleft}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\textwidth}
-        \begin{flushright} \large
-            \textbf{Submission Details:}\\
-            \small \textbf{Organization:} ZAALIMA DEVELOPMENT PVT LTD\\
-            \small \textbf{Date:} October 08, 2026\\
-            \small \textbf{Version:} 1.0 Final Release
-        \end{flushright}
-    \end{minipage}
+\begin{tcolorbox}[colback=codeBg,colframe=codeBorder,arc=2mm,width=\textwidth]
+    \centering \small
+    \textbf{Organization}: ZAALIMA DEVELOPMENT PVT LTD \quad | \quad 
+    \textbf{GitHub Repository}: \url{https://github.com/tejaa27/E-Commerce-microservies} \quad | \quad 
+    \textbf{Local Path}: \texttt{C:\textbackslash E-Commerce}
+\end{tcolorbox}
 
-    \vfill
-
-    \begin{tcolorbox}[colback=codeBg,colframe=codeBorder,arc=2mm,width=\textwidth]
-        \centering \small
-        \textbf{GitHub Repository}: \url{https://github.com/tejaa27/E-Commerce-microservies}\\
-        \textbf{Local System Directory}: \texttt{C:\textbackslash E-Commerce}
-    \end{tcolorbox}
-
-\end{titlepage}
-
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
-% ABSTRACT & EXECUTIVE SUMMARY
+% EXECUTIVE SUMMARY
 % ==========================================
 \section*{Executive Summary}
-This report details the design, implementation, and deployment of a modern, highly scalable back-end infrastructure built for high-traffic E-Commerce platforms. Developed by \textbf{KANNEKANTI TEJA KIRAN} for submission to \textbf{ZAALIMA DEVELOPMENT PVT LTD}, the architecture transitions monolithic business processes into 6 independently deployable Spring Boot microservices (\texttt{API Gateway}, \texttt{Service Registry}, \texttt{Order Processing}, \texttt{Inventory Management}, \texttt{Payment Processing}, and \texttt{Notification Service}).
+This report details the design, implementation, and deployment of a modern, highly scalable back-end infrastructure built for high-traffic E-Commerce platforms. Prepared for submission to \textbf{ZAALIMA DEVELOPMENT PVT LTD}, the architecture transitions monolithic business processes into 6 independently deployable Spring Boot microservices (\texttt{API Gateway}, \texttt{Service Registry}, \texttt{Order Processing}, \texttt{Inventory Management}, \texttt{Payment Processing}, and \texttt{Notification Service}).
 
 To maintain data consistency across distributed relational (\textbf{PostgreSQL}) and document (\textbf{MongoDB}) databases without two-phase commit (2PC) distributed locks, the system implements a \textbf{Choreography-based Saga Design Pattern} over \textbf{Apache Kafka}. The entire platform features resilience controls (\textbf{Resilience4j}), distributed tracing (\textbf{Zipkin} and \textbf{Micrometer}), containerization (\textbf{Docker Compose}), and orchestration manifests (\textbf{Kubernetes}).
 
-\tableofcontents
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 1: ARCHITECTURE & SAGA PATTERN
@@ -160,7 +127,7 @@ Distributed transactions follow an asynchronous event choreography model across 
     \item \textbf{Notification Alert}: \texttt{Notification Service} listens for completed/cancelled events and logs customer SMS/email alerts in MongoDB \texttt{notification\_db}.
 \end{enumerate}
 
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 2: TECH STACK SPECIFICATION
@@ -188,6 +155,8 @@ Containerization & Docker \& Kubernetes & Multi-stage container builds \& K8s de
 \bottomrule
 \end{tabular}
 \end{table}
+
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 3: 4-WEEK DEVELOPMENT ROADMAP
@@ -222,7 +191,7 @@ Containerization & Docker \& Kubernetes & Multi-stage container builds \& K8s de
     \item \textbf{Day 6--7}: Executed full stack integration testing, verified status \texttt{CONFIRMED} outputs, and pushed codebase to GitHub.
 \end{itemize}
 
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 4: CODE SPECIFICATIONS
@@ -277,7 +246,7 @@ EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
 \end{lstlisting}
 
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 5: RUNTIME OUTPUTS & DASHBOARDS
@@ -322,7 +291,7 @@ Querying the API Gateway routed endpoint demonstrates complete Saga transaction 
 }
 \end{lstlisting}
 
-\newpage
+\vspace{0.3cm}
 
 % ==========================================
 % SECTION 6: DEPLOYMENT INSTRUCTIONS
@@ -345,30 +314,21 @@ kubectl apply -f k8s/api-gateway-deployment.yaml
 kubectl apply -f k8s/order-service-deployment.yaml
 \end{lstlisting}
 
+\vspace{0.5cm}
+
 % ==========================================
 % SECTION 7: CONCLUSION & APPROVAL
 % ==========================================
 \section{Conclusion \& Submission Approval}
 The \textbf{Distributed Event-Driven E-Commerce Microservices Platform} successfully solves data consistency, isolation, and scalability challenges in high-throughput back-end infrastructures. Through Kafka event sourcing, Resilience4j fault tolerance, and Zipkin tracing, the platform provides enterprise-grade performance suitable for modern production environments.
 
-\vspace{1cm}
+\vspace{0.8cm}
 
-\begin{minipage}{0.48\textwidth}
-    \begin{flushleft}
-        \textbf{Prepared By:}\\
-        \vspace{1cm}
-        \textbf{KANNEKANTI TEJA KIRAN}\\
-        Lead Software Engineering Trainee
-    \end{flushleft}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \begin{flushright}
-        \textbf{Submitted To:}\\
-        \vspace{1cm}
-        \textbf{ZAALIMA DEVELOPMENT PVT LTD}\\
-        Technical Review Board
-    \end{flushright}
-\end{minipage}
+\begin{center}
+    \textbf{Submitted To:}\\
+    \vspace{0.2cm}
+    \textbf{ZAALIMA DEVELOPMENT PVT LTD}\\
+    Technical Review Board
+\end{center}
 
 \end{document}
