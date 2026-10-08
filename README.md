@@ -84,7 +84,62 @@ sequenceDiagram
 
 ---
 
-## 📸 System Monitoring & Runtime Outputs
+## ⚡ Apache Kafka Message Broker & Event Sourcing
+
+Apache Kafka acts as the central event bus connecting microservices asynchronously. Events are published to partitioned Kafka topics (`order-events`, `inventory-events`, `payment-events`) with consumer groups ensuring strictly ordered event delivery and fault isolation.
+
+![Apache Kafka Console Consumer & Event Topics](assets/kafka_message_broker.jpg)
+
+### Kafka Event Messaging Flow:
+- **`order-events` Topic**: Receives `OrderCreatedEvent` and `OrderCancelledEvent` published by `order-service`.
+- **`inventory-events` Topic**: Receives `INVENTORY_RESERVED` and `INVENTORY_FAILED` published by `inventory-service`.
+- **`payment-events` Topic**: Receives `PAYMENT_PROCESSED` and `PAYMENT_FAILED` published by `payment-service`.
+
+---
+
+## 🍃 MongoDB Notification Database & Document Store
+
+The `notification-service` uses MongoDB (`notification_db`) to record non-relational customer alert logs. When order events finish, notification documents are saved inside the `notification_logs` collection to track SMS and email dispatches.
+
+![MongoDB Compass Collection View](assets/mongodb_database.jpg)
+
+### Notification Document Schema (`notification_logs`):
+```json
+{
+  "_id": "ObjectId('653b8f10a9c8e123456789ab')",
+  "orderNumber": "ORD-c04c1654",
+  "customerId": "cust_new_1",
+  "channel": "SMS",
+  "status": "SENT",
+  "message": "Your order ORD-c04c1654 has been CONFIRMED successfully!",
+  "timestamp": "2026-09-30T22:53:02.123Z"
+}
+```
+
+---
+
+## 🐳 Docker Deployment & Container Management
+
+All 11 microservice application containers and infrastructure datastores operate in an isolated container network (`ecommerce-net`) managed via Docker Desktop and Docker Compose.
+
+![Docker Desktop Container Manager](assets/docker_deployment.jpg)
+
+### Active Container Overview:
+- 🟢 `ecommerce-postgres` — PostgreSQL Database (Port `5432`)
+- 🟢 `ecommerce-mongodb` — MongoDB Document Store (Port `27017`)
+- 🟢 `ecommerce-zookeeper` — Zookeeper Coordinator (Port `2181`)
+- 🟢 `ecommerce-kafka` — Apache Kafka Broker (Port `9092` / `29092`)
+- 🟢 `ecommerce-zipkin` — Zipkin Distributed Tracing (Port `9411`)
+- 🟢 `ecommerce-service-registry` — Netflix Eureka Server (Port `8761`)
+- 🟢 `ecommerce-api-gateway` — Spring Cloud API Gateway (Port `8085`)
+- 🟢 `ecommerce-order-service` — Order Service (Port `8081`)
+- 🟢 `ecommerce-inventory-service` — Inventory Service (Port `8082`)
+- 🟢 `ecommerce-payment-service` — Payment Service (Port `8083`)
+- 🟢 `ecommerce-notification-service` — Notification Service (Port `8084`)
+
+---
+
+## 📸 System Monitoring & Integration Test Results
 
 ### 1. Spring Cloud Eureka Service Registry Status
 Integration test execution and automated saga transaction verification output:
