@@ -1,4 +1,6 @@
-# 🚀 Distributed Event-Driven E-Commerce Microservices Platform
+# 🚀 Distributed Event-Driven E-Commerce Microservices (Saga Pattern)
+
+> **Zaalima Development — Production-Level Java Microservices Infrastructure**
 
 [![Java 17](https://img.shields.io/badge/Java-17%2B-orange?logo=openjdk)](https://www.oracle.com/java/)
 [![Spring Boot 3.2.0](https://img.shields.io/badge/Spring_Boot-3.2.0-green?logo=springboot)](https://spring.io/projects/spring-boot)
@@ -9,71 +11,117 @@
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)](https://www.docker.com/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestrated-blue?logo=kubernetes)](https://kubernetes.io/)
 
-A highly scalable, resilient, event-driven back-end infrastructure built for high-traffic modern e-commerce platforms. The system breaks down a monolithic architecture into **6 independently deployable microservices** (`Order`, `Inventory`, `Payment`, `Notification`, `API Gateway`, and `Eureka Registry`) communicating asynchronously via **Apache Kafka** and the **Choreography-based Saga Design Pattern**.
+A scalable, distributed backend infrastructure for a modern e-commerce platform built with **Java 17+**, **Spring Boot 3**, **Apache Kafka**, **PostgreSQL**, **MongoDB**, **Resilience4j**, and **Zipkin**. 
+
+The system implements the **Choreography-based Saga pattern** to guarantee eventual data consistency across distributed databases without traditional two-phase locking bottlenecks, featuring automated **compensating rollback transactions** for fault recovery.
 
 ---
 
-## 🏗️ System Architecture
+## 🏛️ Architecture & Event-Driven Saga Workflow
 
-The platform uses asynchronous event sourcing to guarantee data consistency across distributed relational (**PostgreSQL**) and document (**MongoDB**) datastores without distributed locks or 2PC protocols.
+In a distributed microservices environment, maintaining data consistency without two-phase commit (2PC) distributed locks is achieved using the **Choreography-based Saga Pattern**, where microservices listen to Kafka events and trigger local transactions autonomously.
 
-![System Architecture Diagram](assets/architecture_diagram.jpg)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Gateway as API Gateway
+    participant Order as Order Service
+    participant Kafka as Apache Kafka
+    participant Inventory as Inventory Service
+    participant Payment as Payment Service
+    participant Notification as Notification Service
 
-### 🔄 Event-Driven Choreography Saga Flow:
+    Client->>Gateway: POST /api/v1/orders
+    Gateway->>Order: Forward Request (JWT Verified)
+    Order->>Order: Save Order (Status: PENDING)
+    Order->>Kafka: Publish OrderCreatedEvent
 
+    par Inventory Check
+        Kafka->>Inventory: Consume OrderCreatedEvent
+        alt Stock Available
+            Inventory->>Inventory: Deduct Stock
+            Inventory->>Kafka: Publish InventoryReservedEvent
+        else Stock Out
+            Inventory->>Kafka: Publish InventoryFailedEvent
+        end
+    and Payment Processing
+        Kafka->>Payment: Consume OrderCreatedEvent
+        alt Payment Success
+            Payment->>Payment: Process Charge
+            Payment->>Kafka: Publish PaymentProcessedEvent
+        else Payment Failed
+            Payment->>Kafka: Publish PaymentFailedEvent
+        end
+    end
+
+    par Order Status Resolution
+        Kafka->>Order: Consume Inventory & Payment Events
+        alt All Steps Succeeded
+            Order->>Order: Update Status -> CONFIRMED
+            Order->>Kafka: Publish OrderCompletedEvent
+        else Any Step Failed
+            Order->>Order: Update Status -> CANCELLED
+            Order->>Kafka: Publish OrderCancelledEvent (Triggers Compensating Tx)
+        end
+    end
+
+    opt Compensating Actions on Failure
+        Kafka->>Payment: Consume OrderCancelledEvent -> Refund if previously charged
+        Kafka->>Inventory: Consume OrderCancelledEvent -> Release reserved stock
+    end
+
+    Kafka->>Notification: Consume OrderCompletedEvent / OrderCancelledEvent
+    Notification->>Notification: Send Email/SMS Notification to User
 ```
-[ Client Request ] ➔ HTTP POST /api/v1/orders
-                         │
-                         ▼
-               ┌──────────────────┐
-               │   API Gateway    │ (Port 8085 - JWT Auth Filter)
-               └────────┬─────────┘
-                        │
-                        ▼
-               ┌──────────────────┐
-               │  Order Service   │ (Status: PENDING)
-               └────────┬─────────┘
-                        │ Publish OrderCreatedEvent
-                        ▼
-           ═════════════════════════════
-                 Apache Kafka Broker
-           ═════════════════════════════
-             │                       │
- (Consume)   │                       │ (Consume)
-             ▼                       ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│   Inventory Service    │  │    Payment Service     │
-│   (Reserves Stock)     │  │   (Charges Payment)    │
-└───────────┬────────────┘  └───────────┬────────────┘
-            │                           │
-            └─────────────┬─────────────┘
-                          │ Publish Result Events
-                          ▼
-           ═════════════════════════════
-                 Apache Kafka Broker
-           ═════════════════════════════
-             │                       │
- (Evaluate)  │                       │ (Send Notification)
-             ▼                       ▼
-┌────────────────────────┐  ┌────────────────────────┐
-│     Order Service      │  │  Notification Service  │
-│  (Status: CONFIRMED)   │  │ (Logs Alert in MongoDB)│
-└────────────────────────┘  └────────────────────────┘
-```
+
+### 🔄 Saga Lifecycle States:
+1. **Order Initiation (`PENDING`)**: Customer places an order; `OrderCreatedEvent` is published to the Kafka topic.
+2. **Stock Reservation**: `InventoryService` checks stock availability. If available, reserves quantity and publishes `InventoryReservedEvent`. If out of stock, emits `InventoryFailedEvent`.
+3. **Payment Authorization**: `PaymentService` processes the charge. If approved, publishes `PaymentProcessedEvent`. If declined or exceeding credit limits, emits `PaymentFailedEvent`.
+4. **Order Confirmation (`CONFIRMED`)**: `OrderService` transitions status to `CONFIRMED` and `NotificationService` dispatches confirmation alerts.
+5. **Compensating Rollback (`CANCELLED`)**: If any intermediate stage fails, an `OrderCancelledEvent` is triggered, automatically rolling back reserved stock and issuing payment refunds.
 
 ---
 
-## 📊 System Monitoring & Runtime Outputs
+## 📸 System Monitoring & Runtime Outputs
 
-### 1. Spring Cloud Netflix Eureka Service Registry (`http://localhost:8761`)
+### 1. Terminal Output & Integration Test Results
+
+![Automated Test Execution & Saga Flow](assets/architecture_diagram.jpg)
+
+### 2. Spring Cloud Eureka Service Registry Status (`http://localhost:8761`)
 Dynamic discovery and load balancing dashboard showing all registered microservices marked **`UP`**:
 
 ![Eureka Service Registry Output](assets/eureka_dashboard.jpg)
 
-### 2. Zipkin Distributed Tracing UI (`http://localhost:9411`)
+### 3. Zipkin Distributed Tracing UI (`http://localhost:9411`)
 Distributed trace span waterfall tracking Kafka message propagation latencies and HTTP request flows:
 
 ![Zipkin Tracing Waterfall Output](assets/zipkin_tracing.jpg)
+
+---
+
+## 🛒 Verified Transaction Runtime Output
+
+### GET `http://localhost:8085/api/v1/orders/ORD-c04c1654`
+
+```json
+{
+  "id": 24,
+  "orderNumber": "ORD-c04c1654",
+  "customerId": "cust_new_1",
+  "productId": "prod_laptop_1",
+  "quantity": 1,
+  "totalAmount": 499.99,
+  "status": "CONFIRMED",
+  "inventoryReserved": true,
+  "paymentProcessed": true,
+  "createdAt": "2026-09-30T22:53:01Z"
+}
+```
+
+> **Saga Result**: `inventoryReserved: true`, `paymentProcessed: true`, and `status: CONFIRMED` demonstrate full distributed transaction completion across microservices!
 
 ---
 
@@ -121,42 +169,6 @@ distributed-ecommerce-microservices/
 
 ---
 
-## 🛒 API Endpoint Specifications & Verified Output
-
-### 1. Place a New Order (`POST /api/v1/orders`)
-
-#### Request Body:
-```json
-{
-  "customerId": "cust_new_1",
-  "productId": "prod_laptop_1",
-  "quantity": 1,
-  "totalAmount": 499.99
-}
-```
-
-### 2. Verified Order Response (`GET /api/v1/orders/{orderNumber}`)
-
-#### Response Output (Gateway Routed `http://localhost:8085/api/v1/orders/ORD-c04c1654`):
-```json
-{
-  "id": 24,
-  "orderNumber": "ORD-c04c1654",
-  "customerId": "cust_new_1",
-  "productId": "prod_laptop_1",
-  "quantity": 1,
-  "totalAmount": 499.99,
-  "status": "CONFIRMED",
-  "inventoryReserved": true,
-  "paymentProcessed": true,
-  "createdAt": "2026-09-30T22:53:01Z"
-}
-```
-
-> **Saga State Result**: `inventoryReserved: true`, `paymentProcessed: true`, and `status: CONFIRMED` demonstrate full distributed transaction completion across microservices!
-
----
-
 ## ⚡ Quick Start Guide (Local Deployment)
 
 ### 1. Clone the Repository
@@ -185,18 +197,6 @@ docker compose up --build -d
 | **Kafka Broker** | `9092` | `9092` | Event Broker (`localhost:9092` / `localhost:29092`) |
 | **PostgreSQL** | `5432` | `5432` | Relational Databases (`order_db`, `inventory_db`, `payment_db`) |
 | **MongoDB** | `27017` | `27017` | Document Database (`notification_db`) |
-
----
-
-## ☸️ Kubernetes Deployment
-
-Deploy to Minikube or Cloud Kubernetes cluster using the included manifests:
-
-```bash
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/api-gateway-deployment.yaml
-kubectl apply -f k8s/order-service-deployment.yaml
-```
 
 ---
 
